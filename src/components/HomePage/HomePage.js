@@ -1,5 +1,32 @@
 import './HomePage.css';
 
+const FEATURE_NAV_LINKS = [
+  {
+    id: 'auth',
+    label: 'Authentication',
+    href: '/auth',
+    description: 'Sign in or create an account to get started.',
+  },
+  {
+    id: 'claim-extraction',
+    label: 'Claim Extraction',
+    href: '/claim-extraction',
+    description: 'Extract and manage claims from your data sources.',
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    href: '/dashboard',
+    description: 'View real-time metrics and interactive analytics.',
+  },
+  {
+    id: 'resources',
+    label: 'Resources',
+    href: '/resources',
+    description: 'Browse guides, tutorials, and documentation.',
+  },
+];
+
 const FEATURES = [
   {
     id: 'dashboard',
@@ -68,6 +95,40 @@ function FeatureCard({ icon, name, description }) {
   );
 }
 
+function NavLinkItem({ label, href, description }) {
+  return (
+    <li>
+      <a className="home-page__nav-link" href={href}>
+        <span className="home-page__nav-link-label">{label}</span>
+        <span className="home-page__nav-link-description">{description}</span>
+      </a>
+    </li>
+  );
+}
+
+function NavLinksSection() {
+  return (
+    <section
+      className="home-page__nav-links"
+      aria-labelledby="nav-links-heading"
+    >
+      <h2 id="nav-links-heading" className="home-page__section-title">
+        Quick Navigation
+      </h2>
+      <ul className="home-page__nav-links-list">
+        {FEATURE_NAV_LINKS.map((link) => (
+          <NavLinkItem
+            key={link.id}
+            label={link.label}
+            href={link.href}
+            description={link.description}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function FeaturesSection() {
   return (
     <section className="home-page__features" aria-labelledby="features-heading">
@@ -93,6 +154,7 @@ function HomePage() {
     <div>
       <WelcomeSection />
       <OverviewSection />
+      <NavLinksSection />
       <FeaturesSection />
     </div>
   );

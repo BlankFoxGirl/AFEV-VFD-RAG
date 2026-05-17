@@ -66,6 +66,59 @@
   line-height: 1.7;
 }
 
+/* ── Navigation Links ───────────────────────────────────────── */
+.home-page__nav-links {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 3rem 2rem;
+  margin-bottom: 3rem;
+}
+
+.home-page__nav-links-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+}
+
+.home-page__nav-link {
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f7fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 1.25rem 1.5rem;
+  text-decoration: none;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+}
+
+.home-page__nav-link:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  border-color: #61dafb;
+}
+
+.home-page__nav-link:focus-visible {
+  outline: 2px solid #61dafb;
+  outline-offset: 2px;
+}
+
+.home-page__nav-link-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #282c34;
+  margin-bottom: 0.375rem;
+}
+
+.home-page__nav-link-description {
+  font-size: 0.9rem;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
 /* ── Features ───────────────────────────────────────────────── */
 .home-page__features {
   margin-bottom: 2rem;
@@ -121,6 +174,10 @@
 @media (max-width: 768px) {
   .home-page__welcome-heading {
     font-size: 2rem;
+  }
+
+  .home-page__nav-links-list {
+    grid-template-columns: 1fr;
   }
 
   .home-page__features-grid {
