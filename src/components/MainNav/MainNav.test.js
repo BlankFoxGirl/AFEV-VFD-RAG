@@ -51,8 +51,15 @@ describe('MainNav', () => {
     expect(link).toHaveAttribute('href', '/contact');
   });
 
-  it('renders all five navigation links', () => {
+  it('renders the Register placeholder link', () => {
     render(<MainNav />);
-    expect(screen.getAllByRole('link')).toHaveLength(5);
+    const link = screen.getByRole('link', { name: /register/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/register');
+  });
+
+  it('renders all six navigation links', () => {
+    render(<MainNav />);
+    expect(screen.getAllByRole('link')).toHaveLength(6);
   });
 });
