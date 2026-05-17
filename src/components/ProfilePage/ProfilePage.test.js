@@ -45,6 +45,37 @@ describe('ProfilePage', () => {
     });
   });
 
+  describe('access control', () => {
+    it('redirects to /login?redirect=/profile when the profile fetch returns 401', async () => {
+      const assignMock = jest.fn();
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: { assign: assignMock },
+      });
+
+      profileApi.fetchProfile.mockRejectedValueOnce({
+        response: { status: 401 },
+      });
+
+      render(<ProfilePage />);
+
+      await waitFor(() =>
+        expect(assignMock).toHaveBeenCalledWith('/login?redirect=/profile')
+      );
+    });
+
+    it('shows an error banner rather than redirecting for non-401 fetch failures', async () => {
+      profileApi.fetchProfile.mockRejectedValueOnce(new Error('Network error'));
+      render(<ProfilePage />);
+      await waitFor(() =>
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          /failed to load profile/i
+        )
+      );
+    });
+  });
+
   describe('profile information display', () => {
     it('pre-fills the name field with current user data', async () => {
       await renderLoadedProfilePage();
@@ -341,6 +372,43 @@ describe('ProfilePage', () => {
         expect(
           screen.getByText(/at least 8 characters/i)
         ).toBeInTheDocument()
+      );
+    });
+
+    it('shows error when new password has no uppercase letter', async () => {
+      await renderLoadedProfilePage();
+      await userEvent.type(screen.getByLabelText(/^new password$/i), 'nouppercase1');
+      await userEvent.tab();
+      await waitFor(() =>
+        expect(
+          screen.getByText(/uppercase letter/i)
+        ).toBeInTheDocument()
+      );
+    });
+
+    it('shows error when new password has no number', async () => {
+      await renderLoadedProfilePage();
+      await userEvent.type(screen.getByLabelText(/^new password$/i), 'NoNumberHere');
+      await userEvent.tab();
+      await waitFor(() =>
+        expect(
+          screen.getByText(/at least one number/i)
+        ).toBeInTheDocument()
+      );
+    });
+
+    it('accepts a password that meets length, uppercase, and number requirements', async () => {
+      profileApi.updatePassword.mockResolvedValueOnce({ success: true });
+      await renderLoadedProfilePage();
+      await userEvent.type(screen.getByLabelText(/current password/i), 'OldPass1');
+      await userEvent.type(screen.getByLabelText(/^new password$/i), 'StrongPass1');
+      await userEvent.type(screen.getByLabelText(/confirm new password/i), 'StrongPass1');
+      await userEvent.click(screen.getByRole('button', { name: /update password/i }));
+      await waitFor(() =>
+        expect(profileApi.updatePassword).toHaveBeenCalledWith({
+          currentPassword: 'OldPass1',
+          newPassword: 'StrongPass1',
+        })
       );
     });
 

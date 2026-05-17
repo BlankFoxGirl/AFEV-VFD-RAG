@@ -1,4 +1,4 @@
-const { validateRegistrationInput, validateEmail, validatePassword } = require('../../src/validators/registrationValidator');
+const { validateRegistrationInput, validateEmail, validatePassword, validatePasswordStrength } = require('../../src/validators/registrationValidator');
 
 describe('validateEmail', () => {
   it('returns null for a valid email', () => {
@@ -33,6 +33,30 @@ describe('validatePassword', () => {
 
   it('returns an error when password is shorter than 8 characters', () => {
     expect(validatePassword('short')).toBeTruthy();
+  });
+});
+
+describe('validatePasswordStrength', () => {
+  it('returns null for a password with length, uppercase, and a number', () => {
+    expect(validatePasswordStrength('StrongPass1')).toBeNull();
+  });
+
+  it('returns an error when password is missing', () => {
+    expect(validatePasswordStrength(undefined)).toBeTruthy();
+    expect(validatePasswordStrength(null)).toBeTruthy();
+    expect(validatePasswordStrength('')).toBeTruthy();
+  });
+
+  it('returns an error when password is shorter than 8 characters', () => {
+    expect(validatePasswordStrength('Short1')).toBeTruthy();
+  });
+
+  it('returns an error when password has no uppercase letter', () => {
+    expect(validatePasswordStrength('nouppercase1')).toMatch(/uppercase/i);
+  });
+
+  it('returns an error when password has no number', () => {
+    expect(validatePasswordStrength('NoNumberHere')).toMatch(/number/i);
   });
 });
 

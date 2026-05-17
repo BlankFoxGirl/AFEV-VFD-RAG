@@ -151,6 +151,109 @@ describe('Profile Page E2E', () => {
     await browser.close();
   });
 
+  describe('access control', () => {
+    let page;
+
+    beforeEach(async () => {
+      page = await browser.newPage();
+    });
+
+    afterEach(async () => {
+      await page.close();
+    });
+
+    it('redirects to /login when accessing /profile without authentication', async () => {
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'GET') {
+          request.respond({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: 'No session token provided.' }),
+          });
+        } else {
+          request.continue();
+        }
+      });
+
+      await page.goto(`${FRONTEND_URL}${PROFILE_PATH}`, { waitUntil: 'networkidle0' });
+
+      await page.waitForFunction(
+        (loginPath) => window.location.pathname === loginPath,
+        {},
+        LOGIN_PATH
+      );
+
+      expect(page.url()).toContain(LOGIN_PATH);
+    });
+
+    it('includes the profile path as redirect param when redirecting unauthenticated users', async () => {
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'GET') {
+          request.respond({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: 'No session token provided.' }),
+          });
+        } else {
+          request.continue();
+        }
+      });
+
+      await page.goto(`${FRONTEND_URL}${PROFILE_PATH}`, { waitUntil: 'networkidle0' });
+
+      await page.waitForFunction(
+        (loginPath) => window.location.pathname === loginPath,
+        {},
+        LOGIN_PATH
+      );
+
+      expect(page.url()).toContain('redirect=%2Fprofile');
+    });
+
+    it('allows access to /profile for authenticated users', async () => {
+      await interceptProfileApiWith(page, {
+        statusCode: 200,
+        body: { user: MOCK_PROFILE },
+      });
+
+      await navigateToProfilePage(page);
+
+      await waitForFieldValue(page, '#name', MOCK_PROFILE.name);
+      expect(page.url()).toContain(PROFILE_PATH);
+    });
+
+    it('redirects to /login when the auth token is cleared before accessing /profile', async () => {
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'GET') {
+          request.respond({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: 'Session has expired.' }),
+          });
+        } else {
+          request.continue();
+        }
+      });
+
+      await page.evaluateOnNewDocument(() => {
+        localStorage.removeItem('auth_token');
+      });
+
+      await page.goto(`${FRONTEND_URL}${PROFILE_PATH}`, { waitUntil: 'networkidle0' });
+
+      await page.waitForFunction(
+        (loginPath) => window.location.pathname === loginPath,
+        {},
+        LOGIN_PATH
+      );
+
+      expect(page.url()).toContain(LOGIN_PATH);
+    });
+  });
+
   describe('profile data display', () => {
     let page;
 
@@ -276,6 +379,65 @@ describe('Profile Page E2E', () => {
 
       const alertText = await getAlertText(page);
       expect(alertText).toMatch(/passwords do not match/i);
+    });
+  });
+
+  describe('profile update validation', () => {
+    let page;
+
+    beforeEach(async () => {
+      page = await browser.newPage();
+      await interceptProfileApiWith(page, {
+        statusCode: 200,
+        body: { user: MOCK_PROFILE },
+      });
+      await navigateToProfilePage(page);
+      await waitForFieldValue(page, '#name', MOCK_PROFILE.name);
+    });
+
+    afterEach(async () => {
+      await page.close();
+    });
+
+    it('shows validation error when email format is invalid before submission', async () => {
+      await page.click('#profileEmail', { clickCount: 3 });
+      await page.type('#profileEmail', 'not-an-email');
+      await page.click('#name');
+
+      const alertText = await getAlertText(page);
+      expect(alertText).toMatch(/valid email address/i);
+    });
+
+    it('shows validation error when new password lacks an uppercase letter', async () => {
+      await page.type('#newPassword', 'nouppercase1');
+      await page.click('#name');
+
+      const alertText = await getAlertText(page);
+      expect(alertText).toMatch(/uppercase letter/i);
+    });
+
+    it('shows validation error when new password lacks a number', async () => {
+      await page.type('#newPassword', 'NoNumberHere');
+      await page.click('#name');
+
+      const alertText = await getAlertText(page);
+      expect(alertText).toMatch(/at least one number/i);
+    });
+
+    it('does not call the API when client-side email validation fails', async () => {
+      let profileUpdateCalled = false;
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'PUT') {
+          profileUpdateCalled = true;
+        }
+      });
+
+      await page.click('#profileEmail', { clickCount: 3 });
+      await page.type('#profileEmail', 'bad-email');
+      await page.click('button[type="submit"]');
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      expect(profileUpdateCalled).toBe(false);
     });
   });
 

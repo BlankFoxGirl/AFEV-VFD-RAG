@@ -14,6 +14,14 @@ function validatePassword(password) {
   return null;
 }
 
+function validatePasswordStrength(password) {
+  const baseError = validatePassword(password);
+  if (baseError) return baseError;
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+  return null;
+}
+
 function validateRegistrationInput({ email, password }) {
   const errors = {};
 
@@ -26,4 +34,4 @@ function validateRegistrationInput({ email, password }) {
   return { isValid: Object.keys(errors).length === 0, errors };
 }
 
-module.exports = { validateRegistrationInput, validateEmail, validatePassword };
+module.exports = { validateRegistrationInput, validateEmail, validatePassword, validatePasswordStrength };

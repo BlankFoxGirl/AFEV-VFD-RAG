@@ -1,8 +1,9 @@
 const express = require('express');
-const { validateProfileUpdateInput, validatePhone } = require('../validators/profileUpdateValidator');
-const { validatePassword } = require('../validators/registrationValidator');
+const { validateProfileUpdateInput } = require('../validators/profileUpdateValidator');
 const { findUserById, findUserByEmail, updateUserProfile } = require('../services/userService');
 const { verifyPassword, hashPassword } = require('../services/passwordService');
+const { validateProfileUpdateMiddleware } = require('../middleware/validateProfileUpdate');
+const { validatePasswordUpdateMiddleware } = require('../middleware/validatePasswordUpdate');
 
 const router = express.Router();
 
@@ -28,19 +29,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.put('/update', async (req, res) => {
+router.put('/update', validateProfileUpdateMiddleware, async (req, res) => {
   const { name, email, phone } = req.body;
-  const { isValid, errors } = validateProfileUpdateInput({ name, email });
-  if (!isValid) {
-    return res.status(400).json({ success: false, errors });
-  }
-
-  if (phone !== undefined) {
-    const phoneError = validatePhone(phone);
-    if (phoneError) {
-      return res.status(400).json({ success: false, errors: { phone: phoneError } });
-    }
-  }
 
   try {
     if (email !== undefined) {
@@ -66,19 +56,8 @@ router.put('/update', async (req, res) => {
   }
 });
 
-router.put('/', async (req, res) => {
+router.put('/', validateProfileUpdateMiddleware, async (req, res) => {
   const { name, email, phone } = req.body;
-  const { isValid, errors } = validateProfileUpdateInput({ name, email });
-  if (!isValid) {
-    return res.status(400).json({ success: false, errors });
-  }
-
-  if (phone !== undefined) {
-    const phoneError = validatePhone(phone);
-    if (phoneError) {
-      return res.status(400).json({ success: false, errors: { phone: phoneError } });
-    }
-  }
 
   try {
     if (email !== undefined) {
@@ -104,20 +83,8 @@ router.put('/', async (req, res) => {
   }
 });
 
-router.put('/password', async (req, res) => {
+router.put('/password', validatePasswordUpdateMiddleware, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-
-  if (!currentPassword) {
-    return res.status(400).json({
-      success: false,
-      errors: { currentPassword: 'Current password is required' },
-    });
-  }
-
-  const newPasswordError = validatePassword(newPassword);
-  if (newPasswordError) {
-    return res.status(400).json({ success: false, errors: { newPassword: newPasswordError } });
-  }
 
   try {
     const user = await findUserById(req.user.userId);

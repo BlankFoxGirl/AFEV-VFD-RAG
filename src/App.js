@@ -1,3 +1,4 @@
+import { AuthProvider } from './contexts/AuthContext';
 import RootLayout from './components/RootLayout/RootLayout';
 import HomePage from './components/HomePage/HomePage';
 import RegisterPage from './components/RegisterPage/RegisterPage';
@@ -13,7 +14,11 @@ function resolveCurrentPage() {
 }
 
 function App() {
-  return <RootLayout>{resolveCurrentPage()}</RootLayout>;
+  return (
+    <AuthProvider>
+      <RootLayout>{resolveCurrentPage()}</RootLayout>
+    </AuthProvider>
+  );
 }
 
 export default App;
