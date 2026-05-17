@@ -4,6 +4,7 @@ const { validateLoginInput } = require('../validators/loginValidator');
 const { findUserByEmail, createUser } = require('../services/userService');
 const { verifyPassword } = require('../services/passwordService');
 const { generateToken } = require('../services/tokenService');
+const { defaultSessionStore, generateSessionId } = require('../services/sessionStore');
 
 const router = express.Router();
 
@@ -48,8 +49,11 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ success: false, message: 'Invalid email or password.' });
   }
 
-  const token = generateToken({ userId: user._id, email: user.email });
-  console.info(`Successful login for email: ${email}`);
+  const sessionId = generateSessionId();
+  defaultSessionStore.save(sessionId, user._id.toString(), user.email);
+
+  const token = generateToken({ userId: user._id, email: user.email, sessionId });
+  console.info(`Successful login for email: ${email}, sessionId=${sessionId}`);
 
   return res.status(200).json({
     success: true,
