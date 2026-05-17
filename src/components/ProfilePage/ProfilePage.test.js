@@ -344,6 +344,43 @@ describe('ProfilePage', () => {
       );
     });
 
+    it('shows error when new password has no uppercase letter', async () => {
+      await renderLoadedProfilePage();
+      await userEvent.type(screen.getByLabelText(/^new password$/i), 'nouppercase1');
+      await userEvent.tab();
+      await waitFor(() =>
+        expect(
+          screen.getByText(/uppercase letter/i)
+        ).toBeInTheDocument()
+      );
+    });
+
+    it('shows error when new password has no number', async () => {
+      await renderLoadedProfilePage();
+      await userEvent.type(screen.getByLabelText(/^new password$/i), 'NoNumberHere');
+      await userEvent.tab();
+      await waitFor(() =>
+        expect(
+          screen.getByText(/at least one number/i)
+        ).toBeInTheDocument()
+      );
+    });
+
+    it('accepts a password that meets length, uppercase, and number requirements', async () => {
+      profileApi.updatePassword.mockResolvedValueOnce({ success: true });
+      await renderLoadedProfilePage();
+      await userEvent.type(screen.getByLabelText(/current password/i), 'OldPass1');
+      await userEvent.type(screen.getByLabelText(/^new password$/i), 'StrongPass1');
+      await userEvent.type(screen.getByLabelText(/confirm new password/i), 'StrongPass1');
+      await userEvent.click(screen.getByRole('button', { name: /update password/i }));
+      await waitFor(() =>
+        expect(profileApi.updatePassword).toHaveBeenCalledWith({
+          currentPassword: 'OldPass1',
+          newPassword: 'StrongPass1',
+        })
+      );
+    });
+
     it('shows error when confirm password does not match new password', async () => {
       await renderLoadedProfilePage();
       await userEvent.type(

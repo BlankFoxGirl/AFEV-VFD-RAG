@@ -465,6 +465,12 @@ function NewPasswordField({ register, error }) {
             value: 8,
             message: 'Password must be at least 8 characters',
           },
+          validate: {
+            hasUppercase: (value) =>
+              /[A-Z]/.test(value) || 'Password must contain at least one uppercase letter',
+            hasNumber: (value) =>
+              /[0-9]/.test(value) || 'Password must contain at least one number',
+          },
         })}
       />
       {error && <ErrorMessage role="alert">{error.message}</ErrorMessage>}

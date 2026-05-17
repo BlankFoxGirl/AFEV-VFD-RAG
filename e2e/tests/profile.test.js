@@ -279,6 +279,65 @@ describe('Profile Page E2E', () => {
     });
   });
 
+  describe('profile update validation', () => {
+    let page;
+
+    beforeEach(async () => {
+      page = await browser.newPage();
+      await interceptProfileApiWith(page, {
+        statusCode: 200,
+        body: { user: MOCK_PROFILE },
+      });
+      await navigateToProfilePage(page);
+      await waitForFieldValue(page, '#name', MOCK_PROFILE.name);
+    });
+
+    afterEach(async () => {
+      await page.close();
+    });
+
+    it('shows validation error when email format is invalid before submission', async () => {
+      await page.click('#profileEmail', { clickCount: 3 });
+      await page.type('#profileEmail', 'not-an-email');
+      await page.click('#name');
+
+      const alertText = await getAlertText(page);
+      expect(alertText).toMatch(/valid email address/i);
+    });
+
+    it('shows validation error when new password lacks an uppercase letter', async () => {
+      await page.type('#newPassword', 'nouppercase1');
+      await page.click('#name');
+
+      const alertText = await getAlertText(page);
+      expect(alertText).toMatch(/uppercase letter/i);
+    });
+
+    it('shows validation error when new password lacks a number', async () => {
+      await page.type('#newPassword', 'NoNumberHere');
+      await page.click('#name');
+
+      const alertText = await getAlertText(page);
+      expect(alertText).toMatch(/at least one number/i);
+    });
+
+    it('does not call the API when client-side email validation fails', async () => {
+      let profileUpdateCalled = false;
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'PUT') {
+          profileUpdateCalled = true;
+        }
+      });
+
+      await page.click('#profileEmail', { clickCount: 3 });
+      await page.type('#profileEmail', 'bad-email');
+      await page.click('button[type="submit"]');
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      expect(profileUpdateCalled).toBe(false);
+    });
+  });
+
   describe('full user journey', () => {
     let page;
 
