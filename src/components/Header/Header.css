@@ -1,0 +1,35 @@
+.header {
+  background-color: #282c34;
+  color: #ffffff;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.header__brand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #61dafb;
+  text-decoration: none;
+}
+
+.header__nav {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.header__nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.header__nav-link:hover {
+  color: #61dafb;
+}
