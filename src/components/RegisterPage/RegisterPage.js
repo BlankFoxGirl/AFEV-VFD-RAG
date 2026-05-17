@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
+import { registerUser } from '../../services/registrationApi';
 
 const PageWrapper = styled.div`
   display: flex;
@@ -65,6 +67,28 @@ const ErrorMessage = styled.p`
   font-size: 0.8rem;
   color: #e53e3e;
   margin: 0.375rem 0 0;
+`;
+
+const SuccessBanner = styled.p`
+  background-color: #c6f6d5;
+  color: #276749;
+  border: 1px solid #9ae6b4;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  text-align: center;
+`;
+
+const ServerErrorBanner = styled.p`
+  background-color: #fed7d7;
+  color: #9b2c2c;
+  border: 1px solid #feb2b2;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  text-align: center;
 `;
 
 const SubmitButton = styled.button`
@@ -151,16 +175,22 @@ function ConfirmPasswordField({ register, error, getValues }) {
   );
 }
 
-function RegisterForm({ onSubmit }) {
+function RegisterForm({ onSubmit, successMessage, serverError }) {
   const {
     register,
     handleSubmit,
     getValues,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({ mode: 'onBlur' });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      {successMessage && (
+        <SuccessBanner role="status">{successMessage}</SuccessBanner>
+      )}
+      {serverError && (
+        <ServerErrorBanner role="alert">{serverError}</ServerErrorBanner>
+      )}
       <EmailField register={register} error={errors.email} />
       <PasswordField register={register} error={errors.password} />
       <ConfirmPasswordField
@@ -168,17 +198,44 @@ function RegisterForm({ onSubmit }) {
         error={errors.confirmPassword}
         getValues={getValues}
       />
-      <SubmitButton type="submit">Register</SubmitButton>
+      <SubmitButton type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Registering…' : 'Register'}
+      </SubmitButton>
     </form>
   );
 }
 
-function RegisterPage({ onSubmit = () => {} }) {
+function extractServerErrorMessage(error) {
+  const data = error?.response?.data;
+  if (!data) return 'Registration failed. Please try again.';
+  if (data.errors?.email) return data.errors.email;
+  return 'Registration failed. Please try again.';
+}
+
+function RegisterPage() {
+  const [successMessage, setSuccessMessage] = useState('');
+  const [serverError, setServerError] = useState('');
+
+  async function handleRegistration({ email, password }) {
+    setSuccessMessage('');
+    setServerError('');
+    try {
+      await registerUser({ email, password });
+      setSuccessMessage('Registration successful! You can now log in.');
+    } catch (error) {
+      setServerError(extractServerErrorMessage(error));
+    }
+  }
+
   return (
     <PageWrapper>
       <FormCard>
         <FormTitle>Create an Account</FormTitle>
-        <RegisterForm onSubmit={onSubmit} />
+        <RegisterForm
+          onSubmit={handleRegistration}
+          successMessage={successMessage}
+          serverError={serverError}
+        />
       </FormCard>
     </PageWrapper>
   );

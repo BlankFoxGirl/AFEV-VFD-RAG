@@ -1,8 +1,21 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RegisterPage from './RegisterPage';
+import * as registrationApi from '../../services/registrationApi';
+
+jest.mock('../../services/registrationApi');
+
+const fillValidForm = async () => {
+  await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
+  await userEvent.type(screen.getByLabelText(/^password$/i), 'password123');
+  await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
+};
 
 describe('RegisterPage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders without crashing', () => {
     render(<RegisterPage />);
   });
@@ -55,16 +68,6 @@ describe('RegisterPage', () => {
     );
   });
 
-  it('calls onSubmit with form values when all fields are valid', async () => {
-    const mockOnSubmit = jest.fn();
-    render(<RegisterPage onSubmit={mockOnSubmit} />);
-    await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
-    await userEvent.type(screen.getByLabelText(/^password$/i), 'password123');
-    await userEvent.type(screen.getByLabelText(/confirm password/i), 'password123');
-    await userEvent.click(screen.getByRole('button', { name: /register/i }));
-    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledTimes(1));
-  });
-
   it('integrates with RootLayout as a page child', () => {
     const { container } = render(
       <div className="root-layout">
@@ -81,5 +84,72 @@ describe('RegisterPage', () => {
   it('renders the form inside a card visible at mobile viewport', () => {
     render(<RegisterPage />);
     expect(screen.getByRole('heading', { name: /create an account/i })).toBeInTheDocument();
+  });
+
+  describe('integration: API submission', () => {
+    it('displays success message after successful registration', async () => {
+      registrationApi.registerUser.mockResolvedValueOnce({
+        success: true,
+        user: { id: '1', email: 'user@example.com' },
+      });
+
+      render(<RegisterPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /register/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(/registration successful/i)
+        ).toBeInTheDocument()
+      );
+    });
+
+    it('calls registerUser with email and password on valid submission', async () => {
+      registrationApi.registerUser.mockResolvedValueOnce({ success: true });
+
+      render(<RegisterPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /register/i }));
+
+      await waitFor(() =>
+        expect(registrationApi.registerUser).toHaveBeenCalledWith({
+          email: 'user@example.com',
+          password: 'password123',
+        })
+      );
+    });
+
+    it('displays server error message when registration fails with email conflict', async () => {
+      registrationApi.registerUser.mockRejectedValueOnce({
+        response: {
+          status: 409,
+          data: { success: false, errors: { email: 'Email is already registered' } },
+        },
+      });
+
+      render(<RegisterPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /register/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(/email is already registered/i)
+        ).toBeInTheDocument()
+      );
+    });
+
+    it('displays generic error message when registration fails without specific error', async () => {
+      registrationApi.registerUser.mockRejectedValueOnce(new Error('Network Error'));
+
+      render(<RegisterPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /register/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(/registration failed/i)
+        ).toBeInTheDocument()
+      );
+    });
   });
 });
