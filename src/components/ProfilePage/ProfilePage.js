@@ -371,10 +371,16 @@ function PhoneField({ register, error }) {
   );
 }
 
+function extractFirstFieldError(errors) {
+  const firstKey = Object.keys(errors)[0];
+  return firstKey ? errors[firstKey] : null;
+}
+
 function extractProfileErrorMessage(error) {
   const data = error?.response?.data;
   if (!data) return 'Failed to update profile. Please try again.';
   if (data.message) return data.message;
+  if (data.errors) return extractFirstFieldError(data.errors) || 'Failed to update profile. Please try again.';
   return 'Failed to update profile. Please try again.';
 }
 
@@ -489,6 +495,7 @@ function extractPasswordErrorMessage(error) {
   const data = error?.response?.data;
   if (!data) return 'Failed to update password. Please try again.';
   if (data.message) return data.message;
+  if (data.errors) return extractFirstFieldError(data.errors) || 'Failed to update password. Please try again.';
   return 'Failed to update password. Please try again.';
 }
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { saveToken } from './authToken';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -7,5 +8,7 @@ export async function loginUser({ email, password }) {
     email,
     password,
   });
+  const { token } = response.data;
+  if (token) saveToken(token);
   return response.data;
 }

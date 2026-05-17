@@ -296,6 +296,21 @@ describe('ProfilePage', () => {
         )
       );
     });
+
+    it('shows field-level error from server errors object when profile update fails', async () => {
+      profileApi.updateProfile.mockRejectedValueOnce({
+        response: {
+          data: { success: false, errors: { email: 'Email is already in use.' } },
+        },
+      });
+      await renderLoadedProfilePage();
+      await userEvent.click(screen.getByRole('button', { name: /save changes/i }));
+      await waitFor(() =>
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          /email is already in use/i
+        )
+      );
+    });
   });
 
   describe('password change form', () => {
@@ -422,6 +437,35 @@ describe('ProfilePage', () => {
       await waitFor(() =>
         expect(screen.getByRole('alert')).toHaveTextContent(
           /current password is incorrect/i
+        )
+      );
+    });
+
+    it('shows field-level error from server errors object when password update fails', async () => {
+      profileApi.updatePassword.mockRejectedValueOnce({
+        response: {
+          data: { success: false, errors: { newPassword: 'Password does not meet requirements.' } },
+        },
+      });
+      await renderLoadedProfilePage();
+      await userEvent.type(
+        screen.getByLabelText(/current password/i),
+        'OldPass123'
+      );
+      await userEvent.type(
+        screen.getByLabelText(/^new password$/i),
+        'NewPass456'
+      );
+      await userEvent.type(
+        screen.getByLabelText(/confirm new password/i),
+        'NewPass456'
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: /update password/i })
+      );
+      await waitFor(() =>
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          /password does not meet requirements/i
         )
       );
     });
