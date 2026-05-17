@@ -176,5 +176,40 @@ describe('LoginPage', () => {
         expect(screen.getByText(/login failed/i)).toBeInTheDocument()
       );
     });
+
+    it('shows loading indicator while the login request is in flight', async () => {
+      let resolveLogin;
+      loginApi.loginUser.mockReturnValueOnce(
+        new Promise((resolve) => { resolveLogin = resolve; })
+      );
+
+      render(<LoginPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+      expect(screen.getByRole('button', { name: /signing in/i })).toBeDisabled();
+
+      resolveLogin({ success: true });
+    });
+
+    it('clears the server error banner before each new submission attempt', async () => {
+      loginApi.loginUser
+        .mockRejectedValueOnce(new Error('Network Error'))
+        .mockResolvedValueOnce({ success: true });
+
+      render(<LoginPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+      await waitFor(() =>
+        expect(screen.getByText(/login failed/i)).toBeInTheDocument()
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+      await waitFor(() =>
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      );
+    });
   });
 });
