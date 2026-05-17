@@ -1,3 +1,10 @@
+/* ── Home Page Container ─────────────────────────────────────── */
+.home-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 /* ── Welcome / Hero ─────────────────────────────────────────── */
 .home-page__welcome {
   background: linear-gradient(135deg, #282c34 0%, #3a3f4b 100%);
@@ -176,6 +183,15 @@
     font-size: 2rem;
   }
 
+  .home-page__section-title {
+    font-size: 1.5rem;
+  }
+
+  .home-page__overview,
+  .home-page__nav-links {
+    padding: 2rem 1.5rem;
+  }
+
   .home-page__nav-links-list {
     grid-template-columns: 1fr;
   }
@@ -194,7 +210,40 @@
     font-size: 1.6rem;
   }
 
+  .home-page__welcome-cta {
+    display: block;
+    text-align: center;
+  }
+
+  .home-page__overview,
+  .home-page__nav-links {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .home-page__nav-link {
+    padding: 1rem 1.25rem;
+  }
+
   .home-page__features-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 320px) {
+  .home-page__welcome {
+    padding: 2rem 1rem 1.75rem;
+  }
+
+  .home-page__welcome-heading {
+    font-size: 1.375rem;
+  }
+
+  .home-page__section-title {
+    font-size: 1.25rem;
+  }
+
+  .home-page__overview,
+  .home-page__nav-links {
+    padding: 1.25rem 1rem;
   }
 }

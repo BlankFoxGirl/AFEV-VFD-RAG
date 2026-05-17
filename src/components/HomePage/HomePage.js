@@ -151,7 +151,7 @@ function FeaturesSection() {
 
 function HomePage() {
   return (
-    <div>
+    <div className="home-page">
       <WelcomeSection />
       <OverviewSection />
       <NavLinksSection />
