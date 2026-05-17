@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { label: 'Features', href: '/features' },
   { label: 'Resources', href: '/resources' },
   { label: 'Contact', href: '/contact' },
+  { label: 'Register', href: '/register' },
 ];
 
 function NavItem({ label, href }) {
