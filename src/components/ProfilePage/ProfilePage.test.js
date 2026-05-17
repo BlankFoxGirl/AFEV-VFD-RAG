@@ -45,6 +45,37 @@ describe('ProfilePage', () => {
     });
   });
 
+  describe('access control', () => {
+    it('redirects to /login?redirect=/profile when the profile fetch returns 401', async () => {
+      const assignMock = jest.fn();
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: { assign: assignMock },
+      });
+
+      profileApi.fetchProfile.mockRejectedValueOnce({
+        response: { status: 401 },
+      });
+
+      render(<ProfilePage />);
+
+      await waitFor(() =>
+        expect(assignMock).toHaveBeenCalledWith('/login?redirect=/profile')
+      );
+    });
+
+    it('shows an error banner rather than redirecting for non-401 fetch failures', async () => {
+      profileApi.fetchProfile.mockRejectedValueOnce(new Error('Network error'));
+      render(<ProfilePage />);
+      await waitFor(() =>
+        expect(screen.getByRole('alert')).toHaveTextContent(
+          /failed to load profile/i
+        )
+      );
+    });
+  });
+
   describe('profile information display', () => {
     it('pre-fills the name field with current user data', async () => {
       await renderLoadedProfilePage();

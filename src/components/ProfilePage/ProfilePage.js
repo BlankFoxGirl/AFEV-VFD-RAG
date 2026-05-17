@@ -554,6 +554,14 @@ function PasswordChangeForm() {
   );
 }
 
+function isUnauthenticatedError(error) {
+  return error?.response?.status === 401;
+}
+
+function redirectToLogin() {
+  window.location.assign('/login?redirect=/profile');
+}
+
 function ProfilePage() {
   const [profileData, setProfileData] = useState(null);
   const [loadError, setLoadError] = useState('');
@@ -561,9 +569,13 @@ function ProfilePage() {
   useEffect(() => {
     fetchProfile()
       .then((data) => setProfileData(data.user || data))
-      .catch(() =>
-        setLoadError('Failed to load profile. Please refresh the page.')
-      );
+      .catch((error) => {
+        if (isUnauthenticatedError(error)) {
+          redirectToLogin();
+        } else {
+          setLoadError('Failed to load profile. Please refresh the page.');
+        }
+      });
   }, []);
 
   function handleAvatarUpdate(newAvatarUrl) {

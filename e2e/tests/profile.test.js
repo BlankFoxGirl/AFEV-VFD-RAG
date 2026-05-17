@@ -151,6 +151,109 @@ describe('Profile Page E2E', () => {
     await browser.close();
   });
 
+  describe('access control', () => {
+    let page;
+
+    beforeEach(async () => {
+      page = await browser.newPage();
+    });
+
+    afterEach(async () => {
+      await page.close();
+    });
+
+    it('redirects to /login when accessing /profile without authentication', async () => {
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'GET') {
+          request.respond({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: 'No session token provided.' }),
+          });
+        } else {
+          request.continue();
+        }
+      });
+
+      await page.goto(`${FRONTEND_URL}${PROFILE_PATH}`, { waitUntil: 'networkidle0' });
+
+      await page.waitForFunction(
+        (loginPath) => window.location.pathname === loginPath,
+        {},
+        LOGIN_PATH
+      );
+
+      expect(page.url()).toContain(LOGIN_PATH);
+    });
+
+    it('includes the profile path as redirect param when redirecting unauthenticated users', async () => {
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'GET') {
+          request.respond({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: 'No session token provided.' }),
+          });
+        } else {
+          request.continue();
+        }
+      });
+
+      await page.goto(`${FRONTEND_URL}${PROFILE_PATH}`, { waitUntil: 'networkidle0' });
+
+      await page.waitForFunction(
+        (loginPath) => window.location.pathname === loginPath,
+        {},
+        LOGIN_PATH
+      );
+
+      expect(page.url()).toContain('redirect=%2Fprofile');
+    });
+
+    it('allows access to /profile for authenticated users', async () => {
+      await interceptProfileApiWith(page, {
+        statusCode: 200,
+        body: { user: MOCK_PROFILE },
+      });
+
+      await navigateToProfilePage(page);
+
+      await waitForFieldValue(page, '#name', MOCK_PROFILE.name);
+      expect(page.url()).toContain(PROFILE_PATH);
+    });
+
+    it('redirects to /login when the auth token is cleared before accessing /profile', async () => {
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (request.url().includes(API_PROFILE_PATH) && request.method() === 'GET') {
+          request.respond({
+            status: 401,
+            contentType: 'application/json',
+            body: JSON.stringify({ success: false, message: 'Session has expired.' }),
+          });
+        } else {
+          request.continue();
+        }
+      });
+
+      await page.evaluateOnNewDocument(() => {
+        localStorage.removeItem('auth_token');
+      });
+
+      await page.goto(`${FRONTEND_URL}${PROFILE_PATH}`, { waitUntil: 'networkidle0' });
+
+      await page.waitForFunction(
+        (loginPath) => window.location.pathname === loginPath,
+        {},
+        LOGIN_PATH
+      );
+
+      expect(page.url()).toContain(LOGIN_PATH);
+    });
+  });
+
   describe('profile data display', () => {
     let page;
 

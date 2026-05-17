@@ -116,13 +116,51 @@ describe('LoginPage', () => {
       Object.defineProperty(window, 'location', {
         configurable: true,
         writable: true,
-        value: { assign: assignMock },
+        value: { assign: assignMock, search: '' },
       });
 
       loginApi.loginUser.mockResolvedValueOnce({
         success: true,
         user: { id: '1', email: 'user@example.com' },
       });
+
+      render(<LoginPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+      await waitFor(() =>
+        expect(assignMock).toHaveBeenCalledWith('/dashboard')
+      );
+    });
+
+    it('redirects to the path in the redirect query param after successful login', async () => {
+      const assignMock = jest.fn();
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: { assign: assignMock, search: '?redirect=/profile' },
+      });
+
+      loginApi.loginUser.mockResolvedValueOnce({ success: true });
+
+      render(<LoginPage />);
+      await fillValidForm();
+      await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+      await waitFor(() =>
+        expect(assignMock).toHaveBeenCalledWith('/profile')
+      );
+    });
+
+    it('redirects to /dashboard when the redirect param points to an external URL', async () => {
+      const assignMock = jest.fn();
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: { assign: assignMock, search: '?redirect=https://evil.com' },
+      });
+
+      loginApi.loginUser.mockResolvedValueOnce({ success: true });
 
       render(<LoginPage />);
       await fillValidForm();

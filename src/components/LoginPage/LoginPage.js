@@ -195,6 +195,15 @@ function extractServerErrorMessage(error) {
   return 'Invalid email or password.';
 }
 
+function getPostLoginRedirectPath() {
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get('redirect');
+  if (redirect && redirect.startsWith('/')) {
+    return redirect;
+  }
+  return '/dashboard';
+}
+
 function LoginPage() {
   const [serverError, setServerError] = useState('');
 
@@ -202,7 +211,7 @@ function LoginPage() {
     setServerError('');
     try {
       await loginUser({ email, password });
-      window.location.assign('/dashboard');
+      window.location.assign(getPostLoginRedirectPath());
     } catch (error) {
       setServerError(extractServerErrorMessage(error));
     }
