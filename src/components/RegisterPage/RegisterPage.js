@@ -175,7 +175,7 @@ function ConfirmPasswordField({ register, error, getValues }) {
   );
 }
 
-function RegisterForm({ onSubmit, successMessage, serverError }) {
+function RegisterForm({ onSubmit, serverError }) {
   const {
     register,
     handleSubmit,
@@ -185,9 +185,6 @@ function RegisterForm({ onSubmit, successMessage, serverError }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      {successMessage && (
-        <SuccessBanner role="status">{successMessage}</SuccessBanner>
-      )}
       {serverError && (
         <ServerErrorBanner role="alert">{serverError}</ServerErrorBanner>
       )}
@@ -213,15 +210,13 @@ function extractServerErrorMessage(error) {
 }
 
 function RegisterPage() {
-  const [successMessage, setSuccessMessage] = useState('');
   const [serverError, setServerError] = useState('');
 
   async function handleRegistration({ email, password }) {
-    setSuccessMessage('');
     setServerError('');
     try {
       await registerUser({ email, password });
-      setSuccessMessage('Registration successful! You can now log in.');
+      window.location.assign('/login');
     } catch (error) {
       setServerError(extractServerErrorMessage(error));
     }
@@ -233,7 +228,6 @@ function RegisterPage() {
         <FormTitle>Create an Account</FormTitle>
         <RegisterForm
           onSubmit={handleRegistration}
-          successMessage={successMessage}
           serverError={serverError}
         />
       </FormCard>

@@ -87,7 +87,14 @@ describe('RegisterPage', () => {
   });
 
   describe('integration: API submission', () => {
-    it('displays success message after successful registration', async () => {
+    it('redirects to login page after successful registration', async () => {
+      const assignMock = jest.fn();
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: { assign: assignMock },
+      });
+
       registrationApi.registerUser.mockResolvedValueOnce({
         success: true,
         user: { id: '1', email: 'user@example.com' },
@@ -98,9 +105,7 @@ describe('RegisterPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /register/i }));
 
       await waitFor(() =>
-        expect(
-          screen.getByText(/registration successful/i)
-        ).toBeInTheDocument()
+        expect(assignMock).toHaveBeenCalledWith('/login')
       );
     });
 
