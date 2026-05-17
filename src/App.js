@@ -1,9 +1,10 @@
 import RootLayout from './components/RootLayout/RootLayout';
+import HomePage from './components/HomePage/HomePage';
 
 function App() {
   return (
     <RootLayout>
-      <h1>Welcome to My App</h1>
+      <HomePage />
     </RootLayout>
   );
 }
