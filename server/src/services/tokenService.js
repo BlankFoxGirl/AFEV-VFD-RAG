@@ -1,10 +1,18 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key';
-const JWT_EXPIRES_IN = '24h';
 
-function generateToken({ userId, email }) {
-  return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+function sessionTimeoutSeconds() {
+  return parseInt(process.env.SESSION_TIMEOUT_MINUTES || '30', 10) * 60;
+}
+
+function generateToken({ userId, email, sessionId }) {
+  const jti = crypto.randomUUID();
+  const payload = sessionId
+    ? { userId, email, sessionId, jti }
+    : { userId, email, jti };
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: sessionTimeoutSeconds() });
 }
 
 function decodeToken(token) {
